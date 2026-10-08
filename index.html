@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mitti teardown for TerraLink — revised</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#f5f7f3; --surface:#ffffff; --fg:#1c2620; --muted:#5b6a60; --line:#d9e0d8;
+  --accent:#2d6a3e; --accent-soft:#e3efe5;
+  --build:#2d6a3e; --build-bg:#e1f0e4; --lite:#8a6100; --lite-bg:#fbf0d4;
+  --int:#1f5a8a; --int-bg:#dfecf7; --skip:#8a2f2f; --skip-bg:#f6e1e1;
+  --plus:#3f4b28; --plus-bg:#e8e9e5;
+  --display:"Archivo",system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121815; --surface:#1a221d; --fg:#e4ebe5; --muted:#9aaa9f; --line:#2c3830;
+  --accent:#7cc48e; --accent-soft:#1f3326;
+  --build:#86d39a; --build-bg:#1d3324; --lite:#e8c26a; --lite-bg:#3a2f12; --int:#8cc0ec; --int-bg:#17293a; --skip:#ee9a9a; --skip-bg:#3a1c1c;
+  --plus:#c5ccb8; --plus-bg:#2a3324; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--body);padding:40px 16px 80px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800;padding-bottom:10px;border-bottom:2px solid var(--fg)}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:72ch}
+.eyebrow{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--accent)}
+.muted{color:var(--muted)}
+section{display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:14px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.facts div{background:var(--surface);padding:14px 16px}
+.facts b{display:block;font:500 1.15rem var(--mono);font-variant-numeric:tabular-nums}
+.facts span{font-size:.85rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:.9rem}
+.badge{display:inline-block;font:500 .7rem var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:3px;white-space:nowrap}
+.b-build{color:var(--build);background:var(--build-bg)}
+.b-lite{color:var(--lite);background:var(--lite-bg)}
+.b-int{color:var(--int);background:var(--int-bg)}
+.b-skip{color:var(--skip);background:var(--skip-bg)}
+.b-plus{color:var(--plus);background:var(--plus-bg)}
+.layer{font:500 .72rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:6px}
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.mod{background:var(--surface);border:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mod .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.mod .num{font:500 .75rem var(--mono);color:var(--muted)}
+.mod ul,.panel ul{margin:0;padding-left:18px;font-size:.92rem}
+.mod li,.panel li{margin:2px 0}
+.call{font-size:.88rem;background:var(--accent-soft);padding:8px 10px;border-radius:3px}
+.call b{font-weight:600}
+.tbl{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:680px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);padding:16px 18px;min-width:0}
+.panel h3{margin-bottom:8px}
+code{font:500 .82em var(--mono);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+.roadmap{display:flex;flex-direction:column;border-left:2px solid var(--accent);margin-left:6px}
+.phase{position:relative;padding:2px 0 16px 22px}
+.phase::before{content:"";position:absolute;left:-7px;top:8px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.phase .ph{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.phase .wk{font:500 .8rem var(--mono);color:var(--accent)}
+.phase p{font-size:.93rem;color:var(--muted)}
+.note{border-left:3px solid var(--lite);background:var(--lite-bg);padding:12px 16px;font-size:.93rem}
+footer{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">TerraLink · Internal safety platform · Revised 8 October 2026</div>
+  <h1>What Mitti does, and what TerraLink is building</h1>
+  <p class="muted">Each Mitti capability is listed with a build rating, then set beside what TerraLink’s system will do with it. Updated 8 October 2026 with the decisions made since the first teardown.</p>
+  <div class="legend">
+    <span><span class="badge b-build">Build</span> we rebuild it</span>
+    <span><span class="badge b-lite">Build-lite</span> a simpler version</span>
+    <span><span class="badge b-int">Integrate</span> connect something we already have, or buy later</span>
+    <span><span class="badge b-skip">Skip</span> not for TerraLink</span>
+    <span><span class="badge b-plus">Beyond</span> TerraLink only — Mitti does not have this</span>
+  </div>
+</header>
+
+<section>
+  <h2>Part 1 · Mitti’s feature set, and our call</h2>
+  <p class="muted">Mitti groups its product into Understand (capture), Act (execute), and Improve (learn). It runs on the web and on iPhone and Android, with a public API. The badge is the build rating. The green line is what TerraLink is doing with it.</p>
+
+  <div class="layer">Understand · capture</div>
+  <div class="mods">
+    <div class="mod">
+      <div class="hd"><h3><span class="num">01</span> Inspections, checklists and reports</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Drag-and-drop builder: pages, sections, repeating sections</li>
+        <li>Template library, file upload, and AI draft from a photo, PDF, or prompt. Multi-language templates</li>
+        <li>Choices, text, number, checkbox, date and time, slider, photo and video, annotation, signature, GPS, instructions, barcode, table, formula, and site, asset, or person pickers</li>
+        <li>Logic, required fields, scoring, auto-flagging, and follow-up actions</li>
+        <li>Offline, with a time and place on every answer. Start from a QR code</li>
+        <li>Schedules, approvals, branded PDF, Word and Excel, share link</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Full builder, same on the phone and the server. Hands-free voice inspections. 42 starter templates (fleet, warehouse, plant, and the regulatory pack), English and French on the fleet set. No public marketplace of 9,000 templates.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">02</span> Issue and observation reporting</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Any worker raises an issue: category, photos, location, asset</li>
+        <li>AI turns a photo, voice note, or prompt into a structured issue</li>
+        <li>Public QR for contractors and visitors, no login</li>
+        <li>Auto-assign an owner. Convert to an action. Critical alerts that break through silent mode</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Same capture. US OSHA logs are replaced by WorkSafeBC (and Alberta WCB where the site is Calgary). Categories include spill, near miss, vehicle incident, injury, product damage, and a hazard at a customer’s farm.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">03</span> Asset management</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Register with types, condition, and history</li>
+        <li>QR tag opens history, schedule, and the pre-start check</li>
+        <li>Maintenance by odometer, engine hours, or time. Work orders</li>
+        <li>Telematics <span class="badge b-int">Integrate</span></li>
+        <li>Bluetooth tool tags <span class="badge b-skip">Skip</span></li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Trucks, tenders, sprayers, nurse tanks, forklifts, blend equipment, extinguishers, eyewash. Samsara is confirmed: vehicles, meters, driver inspection reports, and harsh-driving events come in. Samsara stays the fleet system of record.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">04</span> Sensors and IoT</h3><span class="badge b-int">Integrate</span></div>
+      <ul>
+        <li>Temperature and humidity sensors, threshold alerts, readings tied to a site or asset</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Not in the pilot. The database tables are reserved so a cold-chain feed can be added later without a rebuild. Useful later for chemical storage, seed, and biologicals.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">05</span> Lone worker</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Timed check-ins. A miss escalates up a contact chain</li>
+        <li>SOS and silent alarm. GPS only while a session is active</li>
+        <li>Live monitoring dashboard</li>
+        <li>Bluetooth panic buttons <span class="badge b-int">Integrate</span></li>
+      </ul>
+      <div class="call"><b>Adjustment.</b> Upgraded from build-lite. Full sessions, escalation by push, text, and phone call, and phone-based fall detection. Hardware panic buttons stay out of version one.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">06</span> Contractor management</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Company register, required documents, inductions by QR</li>
+        <li>Insurance and licence expiry. AI review of a certificate</li>
+        <li>Self-service portal and renewal reminders</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Custom applicators, haulers, and trades. WorkSafeBC clearance letter and insurance. Live list of who is on site.</div>
+    </div>
+  </div>
+
+  <div class="layer">Act · execute</div>
+  <div class="mods">
+    <div class="mod">
+      <div class="hd"><h3><span class="num">07</span> Tasks and actions</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>From an inspection, issue, alert, chart, or investigation — or from scratch</li>
+        <li>Owner, due date, priority, site, asset, photos, custom types</li>
+        <li>Recurring actions, overdue chasing, a thread on each action</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Types include hazard fix, maintenance, regulatory, and customer. A failed critical inspection item can open the action and take the asset out of service.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">08</span> Communications (Heads Up)</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Broadcast to a region, site, group, or person</li>
+        <li>Video, image, PDF. Comments. Read receipt and signature on critical notices</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Recalls, label changes, heat and wildfire-smoke alerts, policy updates. A morning toolbox talk can be generated from recent near misses and the weather.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">09</span> Documents</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Versions, owners, review dates, permissions, offline copies</li>
+        <li>QR on site opens the file. Read-and-sign</li>
+        <li>Ask a question and get an answer from the documents you are allowed to see</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Safe work procedures, emergency plans, and a safety-data-sheet register with a QR on the shelf. Procedures can also be structured steps, run on the phone like an inspection.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">10</span> AI assistant and agents</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Chat over the data the person is allowed to see. Drafts checklists, courses, and reports</li>
+        <li>Background agents. A person approves before anything is written</li>
+        <li>Mitti meters this as monthly AI credits <span class="badge b-skip">Skip</span></li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Same assistant and approval queue. Cost is tracked, not rationed per seat. Claude for the writing, a separate speech service for voice, a separate voice for course narration.</div>
+    </div>
+  </div>
+
+  <div class="layer">Improve · learn</div>
+  <div class="mods">
+    <div class="mod">
+      <div class="hd"><h3><span class="num">11</span> Training</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Course builder, AI course from a document, quizzes, certificates, offline play</li>
+        <li>Training matrix, expiring credentials, toolbox talks, spaced repetition</li>
+        <li>Mitti’s 1,000-course library and 100-language narration <span class="badge b-skip">Skip</span>. We generate our own courses with AI tools instead: from a prompt, a document, or a walkthrough, and a course can be in more than one language.</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> 15 courses drafted: orientation, WHMIS, TDG for drivers, pesticides, ammonia, forklift, lockout, spill, heat and smoke, fatigue, working alone, first-response muster, PPE, lifting, incident reporting. Languages: English first, French and Punjabi ready to fill in. Leaderboards can wait.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">12</span> Investigations</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>A case that links the issue, the inspection, and the files</li>
+        <li>Root cause, corrective actions, follow-up</li>
+        <li>Mitti’s OSHA log export <span class="badge b-skip">Skip</span></li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> WorkSafeBC employer investigation (48-hour preliminary, 30-day full), claim and return-to-work, and the joint health and safety committee, including the 21-day response timer. Alberta uses the OHS Act serious-incident rules and the 72-hour WCB report.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">13</span> Analytics and branch score</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Dashboard builder, drill-down, create an action from a chart</li>
+        <li>One 1-to-5 star score per site, with notes on how to improve</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Branch league table from inspections, actions, training, credentials, and maintenance. A read-only path for Power BI later. Certificate of Recognition evidence can be pulled from the same records.</div>
+    </div>
+  </div>
+
+  <div class="layer">Platform</div>
+  <div class="mods">
+    <div class="mod">
+      <div class="hd"><h3><span class="num">14</span> Admin and governance</h3><span class="badge b-build">Build</span></div>
+      <ul>
+        <li>Site tree, groups, full / lite / guest seats, permission sets</li>
+        <li>Microsoft sign-in, and automatic user provisioning</li>
+        <li>Activity log. Org-wide defaults</li>
+      </ul>
+      <div class="call"><b>Adjustment.</b> The activity log is kept, not capped at 30–180 days. Staging is the sandbox. Provisioning from Microsoft is in scope once an admin registers the app.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">15</span> Integrations</h3><span class="badge b-lite">Build-lite</span></div>
+      <ul>
+        <li>Our own API and webhooks, so other tools can connect</li>
+        <li>Calendar feed for each person</li>
+        <li>Samsara <span class="badge b-int">Integrate</span></li>
+        <li>Named HR connectors and a 1,000-app marketplace <span class="badge b-skip">Skip</span></li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> Samsara is the one live connector. Sales Dashboard shares customer and farm-site hazards. Ag Retail Intelligence can share weather and field shapes. No HR system to sync until one is named.</div>
+    </div>
+    <div class="mod">
+      <div class="hd"><h3><span class="num">16</span> Commercial extras</h3><span class="badge b-skip">Skip</span></div>
+      <ul>
+        <li>Mitti Insurance</li>
+        <li>Public template and course marketplaces</li>
+        <li>Sensor shop, 24/7 vendor support</li>
+        <li>Per-seat AI credit packs</li>
+      </ul>
+      <div class="call"><b>TerraLink.</b> None of these. We seed our own templates and courses, and we track AI cost without metering it.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Part 2 · Feature set Mitti does not have</h2>
+  <p>These are built on the same spine (permissions, audit, links, notifications). A few stay off until TerraLink confirms the operation.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it does</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Dangerous-goods load check</td><td>Pick the products on a truck. The rules decide class, the 500 kg exemption, placards, and segregation, and draft the shipping paper. An expired TDG certificate blocks the load. This is in the logistics pilot.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Chemical storage map</td><td>Bays and zones per warehouse, tied to safety data sheets. Flags products that should not sit together, and quantities against the fire code.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Spill and emergency mode</td><td>One tap, then the product. Step-by-step response from the safety sheet, the right phone numbers, a reporting-threshold check, and an issue opened with location and time.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Label scanner</td><td>Point the camera at a container. Show the safety sheet, required protective equipment, storage class, and spill steps.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Recalls and label changes</td><td>A supplier recall or a PMRA label change updates the sheet, sends a notice people must acknowledge, and opens a stock check at each branch.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Weather alerts</td><td>Heat, wildfire smoke, cold, lightning, and wind for each branch and for anyone working alone. Can tighten the check-in interval and suggest a toolbox talk.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Farm-site hazards</td><td>Overhead lines, dogs, narrow lanes, no cell coverage, stored against the customer. Drivers see them before a delivery and can add one from the field.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Muster</td><td>Who is on site, then a roll call in an emergency with an alert for anyone unaccounted for.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Joint safety committee</td><td>Members, monthly meeting, agenda from open issues, minutes, and the 21-day employer response clock. Alberta uses the committee and representative thresholds in the OHS Act.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Claims and return to work</td><td>Claim number, costs, and a modified-duty plan with review dates.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Structured procedures</td><td>A safe work procedure is steps with hazards, protective equipment, and evidence, not only a PDF. Running it on the phone reuses the inspection engine. A draft can be generated from a prompt, a document, or a walkthrough video.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Seasonal onboarding</td><td>A short induction for spring staff, in more than one language, with the account expiring at the end of the season.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Pre-season readiness</td><td>A campaign of inspections, maintenance, licences, and training, with a readiness percentage per branch.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>COR readiness</td><td>WorkSafeBC Certificate of Recognition scored from evidence already in the system, with gaps turned into actions. Whether TerraLink is pursuing COR is still unconfirmed.</td><td><span class="badge b-plus">Beyond</span></td></tr>
+      <tr><td>Spray and application safety</td><td>Wind, inversion risk, protective equipment, and a pesticide use record. Only if TerraLink does custom application. Still unconfirmed.</td><td><span class="badge b-lite">Confirm</span></td></tr>
+      <tr><td>Container returns</td><td>Cleanfarms pesticide and fertilizer container logs. Only if TerraLink takes part. Still unconfirmed.</td><td><span class="badge b-lite">Confirm</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="layer">AI that goes past Mitti’s assistant</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Voice inspections</td><td>The phone reads the next question. The person answers out loud. Built for gloves and a truck yard.</td></tr>
+      <tr><td>Photo hazard check</td><td>A second look at inspection and issue photos for missing labels, blocked exits, or bad storage. Suggestions only.</td></tr>
+      <tr><td>Rushed-inspection check</td><td>Flags a checklist finished too fast, copied from the last one, or completed away from the asset. Shown to managers.</td></tr>
+      <tr><td>Regulation copilot</td><td>Answers from WorkSafeBC, TDG, WHMIS, the BC pest-management rules, the fire code, and TerraLink’s own procedures, with the source named.</td></tr>
+      <tr><td>Field hazard assessment</td><td>Drafts a hazard assessment from the task, the site, the weather, and the products. The worker reviews and signs.</td></tr>
+      <tr><td>Investigation helper</td><td>Witness questions, a timeline from the evidence, and a draft report. A person approves it.</td></tr>
+      <tr><td>Refresher lessons</td><td>Short lessons from that person’s own missed questions and failed inspection items.</td></tr>
+      <tr><td>Weekly leadership brief</td><td>A short narrative of wins and risks. Edited before it is sent.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>How it is built</h2>
+  <div class="cols">
+    <div class="panel">
+      <h3>Stack</h3>
+      <ul>
+        <li>Web: React, Vite, and Tailwind, hosted as a static site. White surfaces, forest green <code>#3f4b28</code>.</li>
+        <li>Phone: Expo for iPhone and Android. Works offline, then syncs.</li>
+        <li>Background service: PDFs, schedules, email, text, and AI.</li>
+        <li>Database in Canada, with row-level security so people only see their branches.</li>
+        <li>AI: Claude for writing and vision. A separate service for speech-to-text and for reading courses aloud.</li>
+        <li>Alerts: phone push, text message, and email. Critical lone-worker alerts can break through silent mode.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Pilot, in this order</h3>
+      <ul>
+        <li>Truck pre-trip inspections</li>
+        <li>Vehicle incidents</li>
+        <li>Driver licences: TDG, Class 1 or 3, air brakes</li>
+        <li>Dangerous-goods load check</li>
+        <li>Samsara connection</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Left out</h3>
+      <ul>
+        <li>Mitti Insurance and public marketplaces</li>
+        <li>Per-seat billing and AI credit packs</li>
+        <li>Bluetooth panic buttons, tool tags, and man-down hardware</li>
+        <li>LoRaWAN sensors until there is a reason to buy them</li>
+        <li>A catalogue of HR-system connectors</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Still needed from TerraLink</h2>
+  <p class="muted">The five questions from 7 October are answered. These are the items that still change what gets turned on.</p>
+  <div class="cols">
+    <div class="panel">
+      <h3>To start the pilot</h3>
+      <ul>
+        <li>A Microsoft 365 admin, to turn on single sign-on</li>
+        <li>A read-only Samsara token</li>
+        <li>The branch list, the staff roster, the logo, and the web address</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>To turn conditional features on or off</h3>
+      <ul>
+        <li>Does any branch store ammonium nitrate or anhydrous ammonia, and how much?</li>
+        <li>Is there custom spraying?</li>
+        <li>Pesticide vendor licences, and which sites are AWSA-certified</li>
+        <li>Is a Certificate of Recognition being pursued?</li>
+        <li>Which languages seasonal staff need</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Mitti figures from mitti.com product pages, help.mitti.com, help.safetyculture.com, and the August 2026 rename. Researched 7 October 2026.
+  TerraLink scope, stack, templates, courses, and the regulatory register revised 8 October 2026 from the build plan. Templates and the register are drafts for the safety lead, not legal advice.
+</footer>
+
+</div>
+</body>
+</html>
